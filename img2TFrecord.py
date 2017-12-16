@@ -1,26 +1,60 @@
 import os 
 import tensorflow as tf 
-from PIL import Image  #注意Image,后面会用到
-import matplotlib.pyplot as plt 
-import numpy as np
+from PIL import Image  
 
-cwd=os.getcwd()+'\\train'
-print (cwd)
-classes={'building','nobuilding'} #人为 设定 2 类
-writer= tf.python_io.TFRecordWriter("train.tfrecords") #要生成的文件
+#current dir /trainset---house, nohouse
+#or
+#current dir /validset---house, nohouse
+#
+
+
+#image path
+###
+cwd = os.getcwd()+'/trainset/'
+
+
+#file path
+filepath = cwd
+
+bestnum = 1000
+
+num = 0
+
+recordfilenum = 0
+
+###
+classes=['house_sliced',
+         'nohouse_sliced']
+         
+ftrecordfilename = ("training.tfrecords-%.3d" % recordfilenum)
+writer= tf.python_io.TFRecordWriter(ftrecordfilename)
 
 for index,name in enumerate(classes):
-    class_path=cwd+'\\'+name+'\\'
+    print(index)
+    print(name)
+    class_path=cwd+name+'/'
     for img_name in os.listdir(class_path): 
-        img_path=class_path+img_name #每一个图片的地址
-
+        num=num+1
+        if num>bestnum:
+          num = 1
+          recordfilenum = recordfilenum + 1
+          
+          ftrecordfilename = ("training.tfrecords-%.3d" % recordfilenum)
+          writer= tf.python_io.TFRecordWriter(ftrecordfilename)
+        '''
+        print(num)
+        print(recordfilenum)
+        print(img_name)
+        '''
+        img_path = class_path+img_name #each image path
         img=Image.open(img_path)
-        img= img.resize((5000,5000))
-        img_raw=img.tobytes()#将图片转化为二进制格式
-        example = tf.train.Example(features=tf.train.Features(feature={
+        img_raw=img.tobytes()
+        example = tf.train.Example(
+             features=tf.train.Features(feature={
+             
             "label": tf.train.Feature(int64_list=tf.train.Int64List(value=[index])),
-            'img_raw': tf.train.Feature(bytes_list=tf.train.BytesList(value=[img_raw]))
-        })) #example对象对label和image数据进行封装
-        writer.write(example.SerializeToString())  #序列化为字符串
-
+            'img_raw': tf.train.Feature(bytes_list=tf.train.BytesList(value=[img_raw])),
+        })) 
+          
+        writer.write(example.SerializeToString()) 
 writer.close()
